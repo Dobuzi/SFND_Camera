@@ -28,16 +28,61 @@ void cornernessHarris()
     cv::convertScaleAbs(dst_norm, dst_norm_scaled);
 
     // visualize results
-    string windowName = "Harris Corner Detector Response Matrix";
-    cv::namedWindow(windowName, 4);
-    cv::imshow(windowName, dst_norm_scaled);
-    cv::waitKey(0);
+    // string windowName = "Harris Corner Detector Response Matrix";
+    // cv::namedWindow(windowName, 4);
+    // cv::imshow(windowName, dst_norm_scaled);
+    // cv::waitKey(0);
 
     // TODO: Your task is to locate local maxima in the Harris response matrix 
     // and perform a non-maximum suppression (NMS) in a local neighborhood around 
     // each maximum. The resulting coordinates shall be stored in a list of keypoints 
     // of the type `vector<cv::KeyPoint>`.
+    vector<cv::KeyPoint> kpts;
+    unsigned char response;
+    cv::Scalar color;
 
+    for (int i = 0; i < dst_norm_scaled.rows; i++)
+    {
+        for (int j = 0; j < dst_norm_scaled.cols; j++)
+        {
+            response = dst_norm_scaled.at<unsigned char>(i, j);
+            if (response > minResponse)
+            {
+                cv::KeyPoint pt;
+                pt.pt = cv::Point2f(j, i);
+                pt.size = apertureSize * 2;
+                pt.response = response;
+
+                bool isOverlapped = false;
+                for (auto it = kpts.begin(); it != kpts.end(); ++it)
+                {
+                    if (cv::KeyPoint::overlap (pt, *it))
+                    {
+                        isOverlapped = true;
+                        if (pt.response > (*it).response)
+                        {
+                            *it = pt;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isOverlapped)
+                {
+                    kpts.push_back(pt);
+                }
+            }
+        }
+    }
+
+    // visualize results
+    cv::Mat dst_kpts;
+    cv::drawKeypoints (dst_norm_scaled, kpts, dst_kpts);
+
+    string windowName = "Harris Corner Detector Result";
+    cv::namedWindow(windowName, 4);
+    cv::imshow(windowName, dst_kpts);
+    cv::waitKey(0);
 }
 
 int main()
