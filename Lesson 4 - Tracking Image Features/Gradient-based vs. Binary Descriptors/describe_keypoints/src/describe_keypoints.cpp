@@ -44,7 +44,27 @@ void descKeypoints1()
     // time for both steps and compare both BRISK and SIFT
     // with regard to processing speed and the number and 
     // visual appearance of keypoints.
+    cv::Ptr<cv::FeatureDetector> detector_SIFT = cv::SIFT::create();
+    vector<cv::KeyPoint> kptsSIFT;
 
+    t = (double)cv::getTickCount();
+    detector_SIFT->detect(imgGray, kptsSIFT);
+    t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+    cout << "SIFT detector with n = " << kptsSIFT.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
+
+    cv::Ptr<cv::DescriptorExtractor> descriptor_SIFT = cv::SIFT::create();
+    cv::Mat descSIFT;
+    t = (double)cv::getTickCount();
+    descriptor_SIFT->compute(imgGray, kptsSIFT, descSIFT);
+    t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+    cout << "SIFT descriptor in " << 1000 * t / 1.0 << " ms" << endl;
+
+    cv::Mat visImage_SIFT = img.clone();
+    cv::drawKeypoints(img, kptsSIFT, visImage_SIFT, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    windowName = "SIFT Results";
+    cv::namedWindow(windowName, 1);
+    imshow(windowName, visImage);
+    cv::waitKey(0);
 }
 
 int main()
