@@ -14,12 +14,11 @@ void matchDescriptors(cv::Mat &imgSource, cv::Mat &imgRef, vector<cv::KeyPoint> 
 {
 
     // configure matcher
-    bool crossCheck = false;
+    bool crossCheck = true;
     cv::Ptr<cv::DescriptorMatcher> matcher;
 
     if (matcherType.compare("MAT_BF") == 0)
     {
-
         int normType = descriptorType.compare("DES_BINARY") == 0 ? cv::NORM_HAMMING : cv::NORM_L2;
         matcher = cv::BFMatcher::create(normType, crossCheck);
         cout << "BF matching cross-check=" << crossCheck;
@@ -33,6 +32,7 @@ void matchDescriptors(cv::Mat &imgSource, cv::Mat &imgRef, vector<cv::KeyPoint> 
         }
 
         //... TODO : implement FLANN matching
+        matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
         cout << "FLANN matching";
     }
 
@@ -47,10 +47,24 @@ void matchDescriptors(cv::Mat &imgSource, cv::Mat &imgRef, vector<cv::KeyPoint> 
     }
     else if (selectorType.compare("SEL_KNN") == 0)
     { // k nearest neighbors (k=2)
-
         // TODO : implement k-nearest-neighbor matching
-
+        int k = 2;
+        double t = (double)cv::getTickCount();
+        vector<vector<cv::DMatch> > knnMatches;
+        matcher->knnMatch(descSource, descRef, knnMatches, k); // Finds the kNN match for each descriptor in desc1
         // TODO : filter matches using descriptor distance ratio test
+        const float ratio_thresh = 0.8f;
+
+        for (size_t i = 0; i < knnMatches.size(); i++)
+        {
+            if (knnMatches[i][0].distance < ratio_thresh * knnMatches[i][1].distance)
+            {
+                matches.push_back(knnMatches[i][0]);
+            }
+        }
+
+        t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+        cout << " (kNN) with n=" << matches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
     }
 
     // visualize results
@@ -64,22 +78,58 @@ void matchDescriptors(cv::Mat &imgSource, cv::Mat &imgRef, vector<cv::KeyPoint> 
     cv::waitKey(0);
 }
 
-int main()
+bool checkArg(char* argv)
+{
+    if (atoi(argv) > 2)
+    {
+        cout << "Argument Error: " << argv << endl;
+        return false;
+    }
+    return true;
+}
+
+bool getArguments(vector<char> &args, int argc, char** argv)
+{
+    for (int i = 1; i < argc; ++i)
+    {
+        if (atoi(argv[i]) > 2)
+        {
+            cout << "Argument Error: " << argv[i] << endl;
+            return false;
+        }
+ 
+        args[i-1] = atoi(argv[i]);
+    }
+    return true;
+}
+
+int main(int argc, char** argv)
 {
     cv::Mat imgSource = cv::imread("../images/img1gray.png");
     cv::Mat imgRef = cv::imread("../images/img2gray.png");
 
-    vector<cv::KeyPoint> kptsSource, kptsRef; 
-    readKeypoints("../dat/C35A5_KptsSource_BRISK_large.dat", kptsSource);
-    readKeypoints("../dat/C35A5_KptsRef_BRISK_large.dat", kptsRef);
+    string header = "../dat/C35A5_";
+    string typeset[4] = {"KptsSource_", "KptsRef_", "DescSource_", "DescRef_"};
+    string dataset[3] = {"BRISK_small", "BRISK_large", "SIFT"};
+    string ext = ".dat";
 
-    cv::Mat descSource, descRef; 
-    readDescriptors("../dat/C35A5_DescSource_BRISK_large.dat", descSource);
-    readDescriptors("../dat/C35A5_DescRef_BRISK_large.dat", descRef);
+    vector<char> args = {0, 0, 0};
+    if (!getArguments(args, argc, argv))
+    {
+        return 0;
+    }
+
+    vector<cv::KeyPoint> kptsSource, kptsRef; 
+    readKeypoints((header + typeset[0] + dataset[args[0]] + ext).c_str(), kptsSource);
+    readKeypoints((header + typeset[1] + dataset[args[0]] + ext).c_str(), kptsRef);
+
+    cv::Mat descSource, descRef;
+    readDescriptors((header + typeset[2] + dataset[args[0]] + ext).c_str(), descSource);
+    readDescriptors((header + typeset[3] + dataset[args[0]] + ext).c_str(), descRef);
 
     vector<cv::DMatch> matches;
-    string matcherType = "MAT_BF"; 
+    string matcherType[2] = {"MAT_BF", "MAT_FLANN"};
     string descriptorType = "DES_BINARY"; 
-    string selectorType = "SEL_NN"; 
-    matchDescriptors(imgSource, imgRef, kptsSource, kptsRef, descSource, descRef, matches, descriptorType, matcherType, selectorType);
+    string selectorType[2] = {"SEL_NN", "SEL_KNN"};
+    matchDescriptors(imgSource, imgRef, kptsSource, kptsRef, descSource, descRef, matches, descriptorType, matcherType[args[1]], selectorType[args[2]]);
 }
