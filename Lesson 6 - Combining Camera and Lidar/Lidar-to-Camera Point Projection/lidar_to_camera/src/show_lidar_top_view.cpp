@@ -3,6 +3,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <cmath>
 
 #include "structIO.hpp"
 
@@ -22,15 +23,22 @@ void showLidarTopview()
     // plot Lidar points into image
     for (auto it = lidarPoints.begin(); it != lidarPoints.end(); ++it)
     {
+        // Remove the road point by z value
+        if ((*it).z < -1)
+        {
+            continue;
+        }
+
         float xw = (*it).x; // world position in m with x facing forward from sensor
         float yw = (*it).y; // world position in m with y facing left from sensor
 
         int y = (-xw * imageSize.height / worldSize.height) + imageSize.height;
         int x = (-yw * imageSize.width / worldSize.width) + imageSize.width / 2;
 
-
-        cv::circle(topviewImg, cv::Point(x, y), 5, cv::Scalar(0, 0, 255), -1);
-        
+        // Make the color gradation with green (far) and red (near)
+        unsigned char green = (unsigned char)(abs(xw) / 20 * 255);
+        unsigned char red = (unsigned char)((1 - abs(xw) / 20) * 255);
+        cv::circle(topviewImg, cv::Point(x, y), 5, cv::Scalar(0, green, red), -1);
         // TODO: 
         // 1. Change the color of the Lidar points such that 
         // X=0.0m corresponds to red while X=20.0m is shown as green.
