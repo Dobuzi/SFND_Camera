@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void magnitudeSobel()
+void magnitudeSobel(bool selfmade)
 {
     // load image from file
     cv::Mat img;
@@ -48,8 +48,6 @@ void magnitudeSobel()
 
     cv::Mat magnitude;
     magnitude.create(nrows, ncols, CV_8UC1);
-
-    bool selfmade = true;
 
     if (selfmade)
     {
@@ -102,7 +100,18 @@ void magnitudeSobel()
     cv::waitKey(0); // wait for keyboard input before continuing
 }
 
-int main()
+bool parseArg(int argc, const char *argv[])
 {
-    magnitudeSobel();
+    bool selfmade = true;
+    if (argc > 1)
+    {
+        selfmade = string(argv[1]).compare("true") == 0 ? true : false;
+    }
+    return selfmade;
+}
+
+int main(int argc, const char *argv[])
+{
+    bool selfmade = parseArg(argc, argv);
+    magnitudeSobel(selfmade);
 }
