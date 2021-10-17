@@ -50,6 +50,12 @@ void projectLidarToCamera2()
 
     // TODO
     for(auto it=lidarPoints.begin(); it!=lidarPoints.end(); ++it) {
+        float maxX = 25, maxY = 6, minZ = -1.4, minR = 0.01;
+        if (it->x > maxX || it->x < 0 || abs(it->y) > maxY || it->z < minZ || it->r < minR)
+        {
+            continue;
+        }
+
         // 1. Convert current Lidar point into homogeneous coordinates and store it in the 4D variable X.
         X.at<double>(0, 0) = it->x;
         X.at<double>(1, 0) = it->y;
