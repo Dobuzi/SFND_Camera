@@ -24,7 +24,8 @@ void showLidarTopview()
     for (auto it = lidarPoints.begin(); it != lidarPoints.end(); ++it)
     {
         // Remove the road point by z value
-        if ((*it).z < -1)
+        float minHeight = -1.40;
+        if ((*it).z < minHeight)
         {
             continue;
         }
