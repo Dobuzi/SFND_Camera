@@ -51,7 +51,6 @@ void projectLidarToCamera2()
     // TODO
     for(auto it=lidarPoints.begin(); it!=lidarPoints.end(); ++it) {
         // 1. Convert current Lidar point into homogeneous coordinates and store it in the 4D variable X.
-        cv::Mat X(4, 1, cv::DataType<double>::type);
         X.at<double>(0, 0) = it->x;
         X.at<double>(1, 0) = it->y;
         X.at<double>(2, 0) = it->z;
@@ -59,7 +58,6 @@ void projectLidarToCamera2()
 
         // 2. Then, apply the projection equation as detailed in lesson 5.1 to map X onto the image plane of the camera. 
         // Store the result in Y.
-        cv::Mat Y(3, 1, cv::DataType<double>::type);
         Y = P_rect_00 * R_rect_00 * RT * X;
 
         // 3. Once this is done, transform Y back into Euclidean coordinates and store the result in the variable pt.
