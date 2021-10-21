@@ -13,7 +13,9 @@ using namespace std;
 void detectObjects2()
 {
     // load image from file
-    cv::Mat img = cv::imread("../images/s_thrun.jpg");
+    // cv::Mat img = cv::imread("../images/s_thrun.jpg");
+    // cv::Mat img = cv::imread("../images/0000000000.png");
+    cv::Mat img = cv::imread("../images/babies_under_tree.jpeg");
 
     // load class names from file
     string yoloBasePath = "../dat/yolo/";
@@ -57,7 +59,7 @@ void detectObjects2()
     net.forward(netOutput, names);
 
     // Scan through all bounding boxes and keep only the ones with high confidence
-    float confThreshold = 0.20;
+    float confThreshold = 0.50;
     vector<int> classIds;
     vector<float> confidences;
     vector<cv::Rect> boxes;
@@ -90,7 +92,7 @@ void detectObjects2()
     }
 
     // perform non-maxima suppression
-    float nmsThreshold = 0.4;  // Non-maximum suppression threshold
+    float nmsThreshold = 0.5;  // Non-maximum suppression threshold
     vector<int> indices;
     cv::dnn::NMSBoxes(boxes, confidences, confThreshold, nmsThreshold, indices);
     std::vector<BoundingBox> bBoxes;
